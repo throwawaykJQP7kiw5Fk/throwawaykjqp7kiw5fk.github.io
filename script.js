@@ -44,7 +44,6 @@ xhr.onload = function() {
     const xmlDoc = xhr.responseXML;
     // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
     const keys = [...xmlDoc.querySelectorAll("Key")].reverse();
-    keys.unshift(xmlDoc.querySelector("NextMarker"));
     document.querySelector("#bar").max = keys.length;
     
     for (const element of keys) {
