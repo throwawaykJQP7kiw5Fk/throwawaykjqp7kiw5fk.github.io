@@ -42,13 +42,15 @@ xhr.onload = function() {
       bar.value = Number(bar.value) + 1;
     }
     const xmlDoc = xhr.responseXML;
-    const keys = xmlDoc.querySelectorAll("Key");
+    // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
+    const keys = [...xmlDoc.querySelectorAll("Key")].reverse();
+    keys.unshift(xmlDoc.querySelector("NextMarker"));
     document.querySelector("#bar").max = keys.length;
     
     for (const element of keys) {
       const image = document.createElement("img");
       image.src = "https://i.l4r.io/" + encodeURI(element.textContent);
-      // {once: true} for memory cleanup
+      // {once: true} for ur ram cleanup
       image.addEventListener("load", updateProg, {once: true});
       image.addEventListener("error", updateProg, {once: true});
       document.body.appendChild(image);
