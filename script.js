@@ -46,8 +46,8 @@ xhr.onload = function() {
       bar.value = i;
       // toFixed prevents floating-point artifacts
       const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
-      bar.innerText = calc;
-      forBar.innerHTML = calc === "100.0%" ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
+      bar.innerHTML = calc;
+      forBar.innerText = calc === "100.0%" ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
     }
     const xmlDoc = xhr.responseXML;
     // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
