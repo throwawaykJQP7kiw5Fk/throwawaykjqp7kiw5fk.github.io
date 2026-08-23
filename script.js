@@ -1,3 +1,4 @@
+"use strict";
 // Force-feeds porn
 // To prevent a rare edge case of redirects from randomized timestamps being rate-limited on shared proxy IPs, an array of numbers is used.
 // If a capture is removed or a number doesn't exist otherwise, it should redirect to the closest capture.
@@ -37,12 +38,20 @@ xhr.open("GET", `https://corsproxy.io/?url=https%3A%2F%2Fweb.archive.org%2Fweb%2
 
 xhr.onload = function() {
   if (xhr.status === 200) {
+    const updateProg = () => {
+      bar.value = Number(bar.value) + 1;
+    }
     const xmlDoc = xhr.responseXML;
+    const keys = xmlDoc.querySelectorAll("Key");
+    document.querySelector("#bar").max = keys.length;
     
-    for (const element of xmlDoc.querySelectorAll("Key")) {
-        const image = document.createElement("img");
-        image.src = "https://i.l4r.io/" + encodeURI(element.textContent);
-        document.body.appendChild(image);
+    for (const element of keys) {
+      const image = document.createElement("img");
+      image.src = "https://i.l4r.io/" + encodeURI(element.textContent);
+      // {once: true} for memory cleanup
+      image.addEventListener("load", updateProg, {once: true});
+      image.addEventListener("error", updateProg, {once: true});
+      document.body.appendChild(image);
     }
   }
 };
