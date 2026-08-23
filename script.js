@@ -40,9 +40,10 @@ xhr.onload = function() {
   if (xhr.status === 200) {
     const bar = document.querySelector("#bar");
     const forBar = document.querySelector("#forBar");
+    let i;
     const updateProg = () => {
-      this++;
-      bar.value = this;
+      i++;
+      bar.value = i;
       // toFixed prevents floating-point artifacts
       const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
       bar.innerText = calc;
@@ -52,14 +53,14 @@ xhr.onload = function() {
     // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
     const keys = [...xmlDoc.querySelectorAll("Key")].reverse();
     bar.max = keys.length;
-    let i = 0;
+    i = 0;
     while (i < keys.length) {
       const image = new Image();
       image.style.maxWidth = "100%";
       image.src = "https://i.l4r.io/" + encodeURI(keys[i].textContent);
       // {once: true} for cleaning up ur ram
-      image.addEventListener("load", updateProg.bind(i), {once: true});
-      image.addEventListener("error", updateProg.bind(i), {once: true});
+      image.addEventListener("load", updateProg, {once: true});
+      image.addEventListener("error", updateProg, {once: true});
       document.querySelector("#div").prepend(image);
     }
   }
