@@ -1,7 +1,5 @@
 "use strict";
-// Force-feeds porn
-// To prevent a rare edge case of redirects from randomized timestamps being rate-limited on shared proxy IPs, an array of numbers is used.
-// If a capture is removed or a number doesn't exist otherwise, it should redirect to the closest capture.
+
 const arr = [
   "20240405060243",
   "20240515053250",
@@ -38,33 +36,49 @@ xhr.open("GET", `https://corsproxy.io/?url=https%3A%2F%2Fweb.archive.org%2Fweb%2
 
 xhr.onload = function() {
   if (xhr.status === 200) {
-    const controller = new AbortController();
     const bar = document.querySelector("#bar");
     const forBar = document.querySelector("#forBar");
-    let i;
-    const updateProg = () => {
-      i++;
-      bar.value = i;
-      // toFixed prevents floating-point artifacts
-      const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
-      bar.innerHTML = calc;
-      forBar.innerText = calc === "100.0%" ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
-      controller.abort();
-    }
+    const container = document.querySelector("#div");
+    
     const xmlDoc = xhr.responseXML;
-    // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
     const keys = [...xmlDoc.querySelectorAll("Key")].reverse();
+    
     bar.max = keys.length;
-    i = 0;
-    while (i < keys.length) {
+    let i = 0;
+
+    // This function handles exactly one image at a time
+    const loadNextImage = () => {
+      // Base case: stop when all images are processed
+      if (i >= keys.length) return;
+
       const image = new Image();
       image.style.maxWidth = "100%";
       image.src = "https://i.l4r.io/" + encodeURI(keys[i].textContent);
-      // {once: true} for cleaning up ur ram
-      image.addEventListener("load", updateProg, {signal: controller.signal});
-      image.addEventListener("error", updateProg, {signal: controller.signal});
-      document.querySelector("#div").prepend(image);
-    }
+
+      // Setup a clean tracking function for this single image
+      const onComplete = () => {
+        i++;
+        bar.value = i;
+        
+        const calc = `${(i / keys.length * 100).toFixed(1)}%`;
+        bar.innerHTML = calc;
+        forBar.innerText = i === keys.length ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
+        
+        // CRUCIAL: Only trigger the next image download AFTER this one finishes
+        loadNextImage();
+      };
+
+      // Since we move to the next image sequentially, simple { once: true } 
+      // is perfectly sufficient for automatic RAM cleanup of the listener
+      image.addEventListener("load", onComplete, { once: true });
+      image.addEventListener("error", onComplete, { once: true });
+
+      // Prepend to display immediately as it loads
+      container.prepend(image);
+    };
+
+    // Kickstart the sequential chain
+    loadNextImage();
   }
 };
 
