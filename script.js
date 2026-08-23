@@ -43,7 +43,7 @@ xhr.onload = function() {
     const updateProg = () => {
       bar.value = Number(bar.value) + 1;
       // toFixed prevents floating-point artifacts
-      const calc = `${(bar.max / bar.value * 100).toFixed(1)}%`;
+      const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
       bar.innerText = calc;
       forBar.innerText = calc === "100.0%" ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
     }
