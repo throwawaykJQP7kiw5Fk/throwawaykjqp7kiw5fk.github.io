@@ -41,8 +41,8 @@ xhr.onload = function() {
     const bar = document.querySelector("#bar");
     const forBar = document.querySelector("#forBar");
     const updateProg = () => {
-      i++;
-      bar.value = i;
+      this++;
+      bar.value = this;
       // toFixed prevents floating-point artifacts
       const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
       bar.innerText = calc;
@@ -58,8 +58,8 @@ xhr.onload = function() {
       image.style.maxWidth = "100%";
       image.src = "https://i.l4r.io/" + encodeURI(keys[i].textContent);
       // {once: true} for cleaning up ur ram
-      image.addEventListener("load", updateProg, {once: true});
-      image.addEventListener("error", updateProg, {once: true});
+      image.addEventListener("load", updateProg.bind(i), {once: true});
+      image.addEventListener("error", updateProg.bind(i), {once: true});
       document.querySelector("#div").prepend(image);
     }
   }
