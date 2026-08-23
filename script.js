@@ -38,6 +38,7 @@ xhr.open("GET", `https://corsproxy.io/?url=https%3A%2F%2Fweb.archive.org%2Fweb%2
 
 xhr.onload = function() {
   if (xhr.status === 200) {
+    const controller = new AbortController();
     const bar = document.querySelector("#bar");
     const forBar = document.querySelector("#forBar");
     let i;
@@ -48,6 +49,7 @@ xhr.onload = function() {
       const calc = `${(bar.value / bar.max * 100).toFixed(1)}%`;
       bar.innerHTML = calc;
       forBar.innerText = calc === "100.0%" ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
+      controller.abort();
     }
     const xmlDoc = xhr.responseXML;
     // reversing because the end is usually more unpredictable than the start, prob due to user-initiated self-deletion
@@ -59,8 +61,8 @@ xhr.onload = function() {
       image.style.maxWidth = "100%";
       image.src = "https://i.l4r.io/" + encodeURI(keys[i].textContent);
       // {once: true} for cleaning up ur ram
-      image.addEventListener("load", updateProg, {once: true});
-      image.addEventListener("error", updateProg, {once: true});
+      image.addEventListener("load", updateProg, {signal: controller.signal});
+      image.addEventListener("error", updateProg, {signal: controller.signal});
       document.querySelector("#div").prepend(image);
     }
   }
