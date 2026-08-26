@@ -1,37 +1,7 @@
 "use strict";
 
-const arr = [
-  "20240405060243",
-  "20240515053250",
-  "20240515054017",
-  "20240528234916",
-  "20240531231939",
-  "20240621051412",
-  "20240723152909",
-  "20240803041605",
-  "20240908101850",
-  "20240912210553",
-  "20240912223140",
-  "20241015161914",
-  "20241029090053",
-  "20241112211034",
-  "20241204064031",
-  "20250119034904",
-  "20250129010313",
-  "20250212080804",
-  "20250219022937",
-  "20250324034827",
-  "20250328162718",
-  "20250424102911",
-  "20250424204050",
-  "20250513040925",
-  "20250617123114",
-  "20250620171136",
-  "20250813155448"
-]; // Add your timestamps here
-
 const xhr = new XMLHttpRequest();
-xhr.open("GET", `https://corsproxy.io/?url=https%3A%2F%2Fweb.archive.org%2Fweb%2F${arr[Math.floor(Math.random()*arr.length)]}if_%2Fhttps%3A%2F%2Fi.l4r.io%2F&key=12345678`, true);
+xhr.open("GET", "site-xml.xml", true);
 
 // Guest Mode requires explicit handling of text/xml mappings
 xhr.responseType = "document"; 
