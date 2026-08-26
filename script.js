@@ -29,7 +29,7 @@ xhr.onload = function() {
     return;
   }
 
-  const keys = [...keyElements].reverse();
+  const keys = [...keyElements].sort(function(){return 0.5 - Math.random()});
   bar.max = keys.length;
   let i = 0;
 
