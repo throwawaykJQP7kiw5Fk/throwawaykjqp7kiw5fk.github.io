@@ -1,5 +1,9 @@
 "use strict";
 
+// Inspired by Genshin Impact's far more comprehensive warning
+const warn = confirm("⚠️ Warning: A very small percentage of individuals may experience seizures. Even if you have no prior history of seizures or epilepsy, certain conditions may affect how your body responds to photosensitivity. Please close the tab and consult your physician if you have personal or family history of seizures or epilepsy before continuing. Cancelling will redirect you to Google.");
+if (!warn) window.location.replace("https://www.google.com");
+
 const xhr = new XMLHttpRequest();
 xhr.open("GET", "site-xml.xml", true);
 
