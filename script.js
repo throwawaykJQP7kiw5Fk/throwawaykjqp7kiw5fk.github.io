@@ -43,9 +43,9 @@ xhr.onload = function() {
     const onComplete = () => {
       i++;
       bar.value = i;
-      const calc = `${(i / keys.length * 100).toFixed(1)}%`;
+      const calc = `${i}/${keys.length}`;
       bar.innerHTML = calc;
-      forBar.innerText = i === keys.length ? "✅ Loaded (100.0%):" : `Loading (${calc}):`;
+      forBar.innerText = i === keys.length ? `✅ Loaded (${calc}):` : `Loading (${calc}):`;
       
       // Free memory instantly inside guest environment
       image.onload = null;
