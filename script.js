@@ -5,10 +5,10 @@ const warn = confirm("⚠️ Warning: A very small percentage of individuals may
 if (!warn) window.location.replace("https://www.google.com");
 
 const xhr = new XMLHttpRequest();
-xhr.open("GET", "site-xml.xml", true);
+xhr.open("GET", "keys.txt", true);
 
-// Guest Mode requires explicit handling of text/xml mappings
-xhr.responseType = "document"; 
+// Fetch the file as UTF-8 text
+xhr.responseType = "text";
 
 xhr.onload = function() {
   const bar = document.querySelector("#bar");
@@ -20,50 +20,52 @@ xhr.onload = function() {
     return;
   }
 
-  // Guest Mode Safety: Check if response parsed correctly 
-  const xmlDoc = xhr.responseXML;
-  if (!xmlDoc) {
-    if (forBar) forBar.innerText = "❌ XML Parsing Failed (Guest Mode block)";
+  // XMLHttpRequest decodes the response as text.
+  // Split on LF and remove CR from CRLF files.
+  const keys = xhr.response
+    .split("\n")
+    .map(key => key.replace(/\r$/, "").trim())
+    .filter(key => key.length > 0);
+
+  if (keys.length === 0) {
+    if (forBar) forBar.innerText = "⚠️ No keys found in keys.txt.";
     return;
   }
 
-  const keyElements = xmlDoc.querySelectorAll("Key");
-  if (!keyElements || keyElements.length === 0) {
-    if (forBar) forBar.innerText = "⚠️ No keys found in XML data.";
-    return;
-  }
+  const shuffledKeys = [...keys].sort(function() {
+    return 0.5 - Math.random();
+  });
 
-  const keys = [...keyElements].sort(function(){return 0.5 - Math.random()});
-  bar.max = keys.length;
+  bar.max = shuffledKeys.length;
   let i = 0;
 
   const loadNextImage = () => {
-    if (i >= keys.length) return;
+    if (i >= shuffledKeys.length) return;
 
-    // Guest mode safe image creation via standard DOM
     const image = document.createElement("img");
     image.style.maxWidth = "100%";
-    
+
     const onComplete = () => {
       i++;
       bar.value = i;
-      const calc = `${i}/${keys.length}`;
+      const calc = `${i}/${shuffledKeys.length}`;
       bar.innerHTML = calc;
-      forBar.innerText = i === keys.length ? `✅ Loaded (${calc}):` : `Loading (${calc}):`;
-      
-      // Free memory instantly inside guest environment
+      forBar.innerText = i === shuffledKeys.length
+        ? `✅ Loaded (${calc}):`
+        : `Loading (${calc}):`;
+
       image.onload = null;
       image.onerror = null;
-      
+
       loadNextImage();
     };
 
     image.onload = onComplete;
     image.onerror = onComplete;
-    
+
     // Set source last to prevent synchronous race conditions
-    image.src = "https://i.l4r.io/" + encodeURI(keys[i].textContent.trim());
-    
+    image.src = "https://i.l4r.io/" + encodeURI(shuffledKeys[i]);
+
     if (container) {
       container.prepend(image);
     }
