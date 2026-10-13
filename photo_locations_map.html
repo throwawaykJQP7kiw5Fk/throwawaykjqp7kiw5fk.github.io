@@ -38,7 +38,7 @@ gmp-map-3d{display:block;width:100%;height:100%}
 <div class="bar" id="legend"></div>
 <div class="bar"><label>View <select id="mode"><option value="HYBRID">Satellite + labels</option><option value="SATELLITE">Satellite only</option></select></label><button id="home" type="button">Show all photos</button></div>
 <div id="wrap"><div id="map" role="application" aria-label="3D globe of photo GPS locations"></div><div id="msg"></div><div id="panel"></div></div>
-<div class="hint">Drag to rotate the globe, scroll or pinch to zoom, right-drag or two-finger drag to tilt. Click a point to fly to it and see details.</div>
+<div class="hint">Drag to rotate the globe, scroll or pinch to zoom, right-drag or two-finger drag to tilt. Click a point to fly to it and see details.<br>The labels in mainland China use a different coordinate system from global satellite imagery; please zoom out on the <a href="https://maps.app.goo%2Egl/yM15KQoqNpVajDJJ6" target="_blank">Jiaozhou Bay Bridge</a> for an example.</div>
 </main>
 <script>
 // >>> Paste your Google Maps API key between the quotes below <<<
@@ -87,10 +87,10 @@ async function initMap(){
 
 function select(d){
   const p=document.getElementById('panel');
-  p.innerHTML='<button type="button" aria-label="Close" id="x">&times;</button><b>'+esc(d.f)+'</b><br>'+d.lat+', '+d.lon+(d.c?'<br>'+esc(d.c):'')+(d.alt?'<br>Alt '+esc(d.alt):'')+(d.d?'<br>'+esc(d.d):'')+'<br><a href="https://www.google.com/maps?q='+d.lat+','+d.lon+'" target="_blank" rel="noopener">Open in Google Maps</a>';
+  p.innerHTML='<button type="button" aria-label="Close" id="x">&times;</button><b>'+esc(d.f)+'</b><br>'+d.lat+', '+d.lon+(d.c?'<br>'+esc(d.c):'')+(d.alt?'<br>Altitude: '+esc(d.alt):'')+(d.d?'<br>'+esc(d.d):'')+'<br><a href="https://www.google.com/maps?q='+d.lat+','+d.lon+'" target="_blank" rel="noopener">Open in Google Maps</a>';
   p.style.display='block';
   document.getElementById('x').onclick=()=>{p.style.display='none'};
-  map.flyCameraTo({endCamera:{center:{lat:d.lat,lng:d.lon,altitude:0},range:2500,tilt:55,heading:0},durationMillis:2500});
+  map.flyCameraTo({endCamera:{center:{lat:d.lat,lng:d.lon,altitude:Number(d.alt.slice(2))},range:2500,tilt:55,heading:0},durationMillis:2500});
 }
 
 document.getElementById('home').onclick=()=>{if(map){document.getElementById('panel').style.display='none';map.flyCameraTo({endCamera:home,durationMillis:2500})}};
