@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
 <meta name="og:image" content="https://throwawaykjqp7kiw5fk.github.io/photo_locations_map.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Photo locations</title>
+<title>Photo locations (3D)</title>
 <!--
 How to read this map:
 * safe = safe for work
@@ -21,51 +21,91 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
 main{max-width:1100px;margin:0 auto;padding:16px;display:flex;flex-direction:column;height:100%;box-sizing:border-box}
 h1{font-size:20px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 12px}
-.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
-.legend label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.bar label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
-#map{flex:1;min-height:420px;border-radius:8px;background:var(--line)}
+.bar select,.bar button{padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font:inherit}
+#wrap{position:relative;flex:1;min-height:420px}
+#map{position:absolute;inset:0;border-radius:8px;overflow:hidden;background:#0b1020}
+gmp-map-3d{display:block;width:100%;height:100%}
+#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--mute);background:var(--line);border-radius:8px}
+#panel{position:absolute;left:12px;bottom:12px;max-width:min(280px,calc(100% - 24px));background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;box-shadow:0 2px 10px #0004;display:none;word-break:break-all}
+#panel button{position:absolute;top:4px;right:6px;border:0;background:none;color:var(--mute);font-size:18px;cursor:pointer;line-height:1}
+#panel a{color:var(--safe)}
 .hint{color:var(--mute);font-size:13px;margin-top:8px}
-.iw{font:13px/1.4 system-ui,sans-serif;color:#222;max-width:240px;word-break:break-all}
 </style></head><body><main>
 <h1>Photo locations</h1><p class="sub" id="sub"></p>
-<div class="legend" id="legend"></div>
-<div id="map" role="application" aria-label="Map of photo GPS locations"></div>
-<div class="hint">Scroll or pinch to zoom (down to street level), drag to pan, click a point for details. Use the legend checkboxes to filter.</div>
+<div class="bar" id="legend"></div>
+<div class="bar"><label>View <select id="mode"><option value="HYBRID">Satellite + labels</option><option value="SATELLITE">Satellite only</option></select></label><button id="home" type="button">Show all photos</button></div>
+<div id="wrap"><div id="map" role="application" aria-label="3D globe of photo GPS locations"></div><div id="msg"></div><div id="panel"></div></div>
+<div class="hint">Drag to rotate the globe, scroll or pinch to zoom, right-drag or two-finger drag to tilt. Click a point to fly to it and see details.</div>
 </main>
 <script>
+// >>> Paste your Google Maps API key between the quotes below <<<
+const GOOGLE_MAPS_API_KEY='AIzaSyAf-zEgaqUHaGQyp55ZMc1Ul5Bwaz5CJfg';
+
 const pts=[{"f":"17csqbtlpa4kc2fm.jpeg","g":"hard","lat":40.09307,"lon":-104.9892,"alt":"1528.580128 m","d":"2024-08-12","c":""},{"f":"1fd3h7nk86ngkjsq.jpeg","g":"hard","lat":40.03267,"lon":-86.14698,"alt":"280.0613938 m","d":"2025-07-06","c":""},{"f":"1n1j9bei843j7i4n.jpeg","g":"hard","lat":29.89854,"lon":-95.55208,"alt":"31.06203787 m","d":"2025-01-03","c":""},{"f":"1vj4shcakpolc0h1.jpg","g":"hard","lat":44.57864,"lon":-123.30033,"alt":"125.8 m","d":"2025-06-24","c":"Corvallis, Oregon"},{"f":"25b57rdnaa5r7s5m.jpeg","g":"hard","lat":39.01582,"lon":-77.20724,"alt":"111.2019893 m","d":"","c":""},{"f":"27ah61i6fafebik8.jpeg","g":"hard","lat":45.56734,"lon":-73.40766,"alt":"40.3753586 m","d":"2023-07-27","c":""},{"f":"2dtq8bnpjnikrnmc.jpeg","g":"hard","lat":44.40652,"lon":33.9413,"alt":"257.0877378 m","d":"2024-10-19","c":""},{"f":"2jffo9bp697mcga1.JPG","g":"hard","lat":33.16869,"lon":-96.70612,"alt":"225.4313192 m","d":"2025-04-27","c":""},{"f":"30bjgicdsu1hoa06.jpeg","g":"hard","lat":39.35979,"lon":-77.84181,"alt":"166.6514272 m","d":"","c":""},{"f":"35rcr8bgiud3cgov.jpeg","g":"hard","lat":39.32704,"lon":-77.75369,"alt":"171.5639676 m","d":"","c":""},{"f":"362bjr1egeu6dpm2.jpg","g":"hard","lat":45.95723,"lon":-73.72431,"alt":"115.0226726 m","d":"","c":""},{"f":"3nub28kirckefb9.JPG","g":"hard","lat":41.0206,"lon":-73.87341,"alt":"44.67854711 m","d":"2024-10-12","c":""},{"f":"3uupsdriuu311o9g.jpg","g":"hard","lat":40.69987,"lon":-73.91373,"alt":"39 m","d":"","c":""},{"f":"jgpodfi3itpfmepn.JPG","g":"hard","lat":45.42809,"lon":-71.88628,"alt":"248.46465 m","d":"","c":""},{"f":"nc2mr3kcg2u5b0ok.jpg","g":"hard","lat":45.95721,"lon":-73.72421,"alt":"114.088955 m","d":"","c":""},{"f":"o76gkggq0rk46d2m.JPG","g":"hard","lat":33.87383,"lon":-117.81721,"alt":"94.94931146 m","d":"","c":""},{"f":"11ooagt2gisntsle.JPG","g":"safe","lat":37.09637,"lon":-8.66731,"alt":"3.836991898 m","d":"2023-10-08","c":""},{"f":"14nphm7jrob7m9vo.JPG","g":"safe","lat":29.73271,"lon":-95.34782,"alt":"11.70757866 m","d":"2024-09-28","c":""},{"f":"1l6uf1dd04uovunv.jpg","g":"safe","lat":39.9578,"lon":-75.17268,"alt":"17.36145592 m","d":"2024-10-03","c":""},{"f":"2ll7ltmvaap5m6ss.jpg","g":"safe","lat":32.84587,"lon":-96.84992,"alt":"121 m","d":"","c":""},{"f":"35eop63m4qm4qopj.JPG","g":"safe","lat":34.06003,"lon":-118.4766,"alt":"121.6438065 m","d":"","c":""},{"f":"3h9i99fkjcqjd3ml.jpeg","g":"safe","lat":40.67585,"lon":-73.95917,"alt":"35.35995877 m","d":"2025-04-13","c":""},{"f":"3hs998f39reh7aj8.jpeg","g":"safe","lat":45.65488,"lon":25.62371,"alt":"575.3026667 m","d":"2025-07-04","c":""},{"f":"3maiaf8vrouuhum1.jpg","g":"safe","lat":33.84615,"lon":-84.32982,"alt":"278.6758109 m","d":"2025-04-07","c":""},{"f":"3otqn4ebmim2t911.jpg","g":"safe","lat":47.61192,"lon":-122.34254,"alt":"85.70086356 m","d":"2025-01-22","c":""},{"f":"43blg1knpgj0l05p.JPG","g":"safe","lat":55.65894,"lon":12.60977,"alt":"6.554800749 m","d":"2023-10-01","c":""},{"f":"4925urnj8rhfbfn3.jpg","g":"safe","lat":43.86901,"lon":-79.06155,"alt":"67.4 m","d":"2024-03-21","c":""},{"f":"4bthmsdv94hn8ikv.JPG","g":"safe","lat":3.09891,"lon":101.69006,"alt":"39.33473431 m","d":"2024-03-16","c":""},{"f":"4ie5uptgq2u5bdu.jpg","g":"safe","lat":15.74566,"lon":120.6047,"alt":"19.98820827 m","d":"","c":""},{"f":"53i96pg5g9iapatm.jpg","g":"safe","lat":11.02417,"lon":106.68233,"alt":"67 m","d":"2024-01-20","c":""},{"f":"5c43ni3cfhucklvk.jpg","g":"safe","lat":31.46641,"lon":104.7517,"alt":"0 m","d":"2023-12-21","c":""},{"f":"5k0asirdntpk4d2p.jpeg","g":"safe","lat":52.51426,"lon":13.37883,"alt":"33.78964218 m","d":"2023-04-19","c":""},{"f":"663ung7sedr5n4qb.JPG","g":"safe","lat":-8.49682,"lon":115.30624,"alt":"236.963618 m","d":"","c":""},{"f":"6g8ptt4f6730bafj.JPG","g":"safe","lat":3.09878,"lon":101.69003,"alt":"42.68658399 m","d":"2024-03-16","c":""},{"f":"14fc7pmv8o021r83.JPG","g":"soft","lat":-34.94931,"lon":-57.96306,"alt":"23.40676746 m","d":"2024-02-13","c":""},{"f":"17rkjrk818tt5cek.jpg","g":"soft","lat":39.22724,"lon":-84.58365,"alt":"223 m","d":"","c":""},{"f":"1kkfubf6r1r9g32p.JPG","g":"soft","lat":53.76421,"lon":-1.80313,"alt":"264.5441715 m","d":"","c":""},{"f":"1q6m0qvl55ld7cct.JPG","g":"soft","lat":14.29886,"lon":120.95055,"alt":"144.3673993 m","d":"2025-01-07","c":""},{"f":"20gj57sn738j61p5.png","g":"soft","lat":35.58288,"lon":-97.56915,"alt":"364.3312281 m","d":"2023-12-18","c":""},{"f":"20l5o9ncmp9l6i9s.37.01_AM.jpg","g":"soft","lat":37.40231,"lon":-97.27934,"alt":"373.8351632 m","d":"","c":""},{"f":"2bpe5sl1ujku3fov.JPEG","g":"soft","lat":38.91601,"lon":-104.83286,"alt":"1937.01052 m","d":"2024-10-12","c":""},{"f":"2dpheoh1r63odb5b.jpeg","g":"soft","lat":44.43954,"lon":-88.07771,"alt":"186.3290672 m","d":"","c":""},{"f":"2gu6se0dvj2hr7g0.jpeg","g":"soft","lat":40.81002,"lon":-74.19415,"alt":"46.56801447 m","d":"2024-07-30","c":""},{"f":"2reaf282ojjvg7i6.MP.jpg","g":"soft","lat":33.94674,"lon":-118.32296,"alt":"28.22 m","d":"2024-01-12","c":""},{"f":"2ti1pkhcqh400o4k.jpg","g":"soft","lat":-34.94933,"lon":-57.96293,"alt":"23.27415615 m","d":"","c":""},{"f":"3bo7ui0i0c5gspjd.jpeg","g":"soft","lat":39.01583,"lon":-77.20726,"alt":"109.5950272 m","d":"","c":""},{"f":"3gbd0tcqfk5olnf2.jpeg","g":"soft","lat":39.01582,"lon":-77.20725,"alt":"112.3012353 m","d":"","c":""},{"f":"3hl8enbengiujmlt.JPG","g":"soft","lat":26.15862,"lon":-98.19569,"alt":"29.5492413 m","d":"","c":""},{"f":"3mgpoa9o3p6e1hn7.jpeg","g":"soft","lat":39.01583,"lon":-77.20727,"alt":"109.5397047 m","d":"","c":""},{"f":"3ml1hlsrldsnse5.JPG","g":"soft","lat":-34.94933,"lon":-57.96298,"alt":"23.33312349 m","d":"2024-02-21","c":""},{"f":"5g2nqlb8gppa9ks7.jpg","g":"soft","lat":33.70663,"lon":-117.84392,"alt":"15.92833174 m","d":"","c":""},{"f":"5tq4g7m6tnn6kvj3.jpeg","g":"soft","lat":26.15861,"lon":-98.19568,"alt":"30.05703915 m","d":"","c":""},{"f":"6dkpunomv0ra1sdp.jpeg","g":"soft","lat":38.79291,"lon":-104.74426,"alt":"1816.302817 m","d":"2023-10-22","c":""},{"f":"81m0ejlp7t9b0dlk.jpg","g":"soft","lat":45.95716,"lon":-73.72428,"alt":"105.4751299 m","d":"","c":""},{"f":"gf6md2andbjbl4v5.jpg","g":"soft","lat":27.76953,"lon":-82.64346,"alt":"15.66431809 m","d":"2019-02-24","c":""},{"f":"t7gje018ul176f29.jpg","g":"soft","lat":27.76952,"lon":-82.64346,"alt":"15.72592354 m","d":"2019-02-24","c":""}];
 const COLORS=matchMedia('(prefers-color-scheme:dark)').matches?{hard:'#ff8a4c',safe:'#5ca8ff',soft:'#5fd07a'}:{hard:'#d9480f',safe:'#1c7ed6',soft:'#2f9e44'};
 const n={};pts.forEach(p=>n[p.g]=(n[p.g]||0)+1);
 document.getElementById('sub').textContent=pts.length+' geotagged photos';
-const groups=['hard','safe','soft'],visible={hard:true,safe:true,soft:true},markers=[];
+const groups=['hard','safe','soft'],markers=[];
 document.getElementById('legend').innerHTML=groups.map(k=>'<label><input type="checkbox" data-k="'+k+'" checked><i class="dot" style="background:'+COLORS[k]+'"></i>'+k+' ('+(n[k]||0)+')</label>').join('');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-// >>> Paste your Google Maps API key between the quotes below <<<
-const GOOGLE_MAPS_API_KEY='AIzaSyAf-zEgaqUHaGQyp55ZMc1Ul5Bwaz5CJfg';
-function loadMaps(key){
+
+function showError(msg){const m=document.getElementById('msg');m.textContent=msg;m.style.display='flex'}
+
+// Work out a camera that frames every photo: average position, then distance to the farthest photo.
+function homeView(){
+  const R=Math.PI/180;let x=0,y=0,z=0;
+  pts.forEach(p=>{const a=p.lat*R,b=p.lon*R;x+=Math.cos(a)*Math.cos(b);y+=Math.cos(a)*Math.sin(b);z+=Math.sin(a)});
+  const L=Math.hypot(x,y,z)||1;x/=L;y/=L;z/=L;
+  const lat=Math.asin(z)/R,lon=Math.atan2(y,x)/R;
+  let far=0;
+  pts.forEach(p=>{const a=p.lat*R,b=p.lon*R;const d=Math.acos(Math.min(1,Math.max(-1,Math.cos(a)*Math.cos(b)*x+Math.cos(a)*Math.sin(b)*y+Math.sin(a)*z)));far=Math.max(far,d)});
+  const range=Math.min(28e6,Math.max(2e6,(far*6371000*1.5)/Math.tan(17.5*R)));
+  return {center:{lat,lng:lon,altitude:0},range,tilt:0,heading:0};
+}
+
+let map,home;
+async function initMap(){
+  try{
+    const {Map3DElement,Marker3DInteractiveElement}=await google.maps.importLibrary('maps3d');
+    const {PinElement}=await google.maps.importLibrary('marker');
+    home=homeView();
+    map=new Map3DElement({mode:'HYBRID',center:home.center,range:home.range,tilt:0,heading:0});
+    map.addEventListener('gmp-error',()=>showError('The 3D map could not start. Check your API key, that the Maps JavaScript API is enabled, and that this page\'s address is allowed by the key\'s referrer restriction.'));
+    document.getElementById('map').appendChild(map);
+    pts.forEach(d=>{
+      const pin=new PinElement({background:COLORS[d.g],borderColor:'#ffffff',glyphColor:'#ffffff',scale:.8});
+      const m=new Marker3DInteractiveElement({position:{lat:d.lat,lng:d.lon},title:d.f,sizePreserved:true,drawsWhenOccluded:true});
+      m.append(pin);m.group=d.g;
+      m.addEventListener('gmp-click',()=>select(d));
+      markers.push(m);map.append(m);
+    });
+  }catch(e){console.error(e);showError('The 3D map library failed to load. Check the browser console for details.')}
+}
+
+function select(d){
+  const p=document.getElementById('panel');
+  p.innerHTML='<button type="button" aria-label="Close" id="x">&times;</button><b>'+esc(d.f)+'</b><br>'+d.lat+', '+d.lon+(d.c?'<br>'+esc(d.c):'')+(d.alt?'<br>Alt '+esc(d.alt):'')+(d.d?'<br>'+esc(d.d):'')+'<br><a href="https://www.google.com/maps?q='+d.lat+','+d.lon+'" target="_blank" rel="noopener">Open in Google Maps</a>';
+  p.style.display='block';
+  document.getElementById('x').onclick=()=>{p.style.display='none'};
+  map.flyCameraTo({endCamera:{center:{lat:d.lat,lng:d.lon,altitude:0},range:2500,tilt:55,heading:0},durationMillis:2500});
+}
+
+document.getElementById('home').onclick=()=>{if(map){document.getElementById('panel').style.display='none';map.flyCameraTo({endCamera:home,durationMillis:2500})}};
+document.getElementById('mode').onchange=e=>{if(map)map.mode=e.target.value};
+document.querySelectorAll('#legend input').forEach(cb=>cb.addEventListener('change',()=>{
+  markers.filter(m=>m.group===cb.dataset.k).forEach(m=>{cb.checked?map.append(m):m.remove()});
+}));
+
+window.gm_authFailure=()=>showError('Google Maps rejected the API key. Check GOOGLE_MAPS_API_KEY in this file and that the Maps JavaScript API is enabled.');
+if(GOOGLE_MAPS_API_KEY==='YOUR_API_KEY_HERE'){
+  showError('Add your Google Maps API key: open this file in a text editor and replace YOUR_API_KEY_HERE near the top of the script.');
+}else{
   window.initMap=initMap;
   const s=document.createElement('script');
-  s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&callback=initMap&loading=async&v=weekly';
+  s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GOOGLE_MAPS_API_KEY)+'&callback=initMap&loading=async&v=weekly';
   s.async=true;document.head.appendChild(s);
 }
-function initMap(){
-  const map=new google.maps.Map(document.getElementById('map'),{center:{lat:30,lng:-40},zoom:2,minZoom:2,maxZoom:21,mapTypeControl:true,streetViewControl:true,gestureHandling:'greedy'});
-  const iw=new google.maps.InfoWindow(),bounds=new google.maps.LatLngBounds();
-  pts.forEach(d=>{
-    const pos={lat:d.lat,lng:d.lon};bounds.extend(pos);
-    const m=new google.maps.Marker({position:pos,map,title:d.f,icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:COLORS[d.g],fillOpacity:.9,strokeColor:'#fff',strokeWeight:1.5}});
-    m.group=d.g;
-    m.addListener('click',()=>{iw.setContent('<div class="iw"><b>'+esc(d.f)+'</b><br>'+d.lat+', '+d.lon+(d.c?'<br>'+esc(d.c):'')+(d.alt?'<br>Alt '+esc(d.alt):'')+(d.d?'<br>'+esc(d.d):'')+'<br><a href="https://www.google.com/maps?q='+d.lat+','+d.lon+'" target="_blank" rel="noopener">Open in Google Maps</a></div>');iw.open(map,m)});
-    markers.push(m);
-  });
-  if(pts.length)map.fitBounds(bounds,40);
-  document.querySelectorAll('#legend input').forEach(cb=>cb.addEventListener('change',()=>{
-    visible[cb.dataset.k]=cb.checked;markers.forEach(m=>m.setVisible(visible[m.group]));
-  }));
-}
-function showError(msg){const m=document.getElementById('map');m.style.display='flex';m.style.alignItems='center';m.style.justifyContent='center';m.style.padding='20px';m.style.textAlign='center';m.style.color='var(--mute)';m.textContent=msg}
-window.gm_authFailure=()=>showError('Google Maps rejected the API key. Check GOOGLE_MAPS_API_KEY in this file and that the Maps JavaScript API is enabled.');
-if(GOOGLE_MAPS_API_KEY==='YOUR_API_KEY_HERE')showError('Add your Google Maps API key: open this file in a text editor and replace YOUR_API_KEY_HERE near the bottom.');
-else loadMaps(GOOGLE_MAPS_API_KEY);
 </script></body></html>
